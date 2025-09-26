@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { CURRENT_USER_ID, type Message, type User } from '@/lib/data';
@@ -19,6 +19,20 @@ interface ChatMessagesProps {
   participants: User[];
   blockedUsers: string[];
   handleBlockUser: (userId: string) => void;
+}
+
+function FormattedTimestamp({ timestamp }: { timestamp: string }) {
+  const [formattedTime, setFormattedTime] = useState('');
+
+  useEffect(() => {
+    setFormattedTime(format(new Date(timestamp), 'h:mm a'));
+  }, [timestamp]);
+
+  if (!formattedTime) {
+    return null;
+  }
+
+  return <span className="text-xs text-muted-foreground">{formattedTime}</span>;
 }
 
 export function ChatMessages({
@@ -77,9 +91,7 @@ export function ChatMessages({
               {showAvatarAndName && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm">{user?.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(message.timestamp), 'h:mm a')}
-                  </span>
+                  <FormattedTimestamp timestamp={message.timestamp} />
                 </div>
               )}
               <div
