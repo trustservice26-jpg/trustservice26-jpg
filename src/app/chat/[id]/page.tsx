@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -20,7 +19,6 @@ export default function PrivateChatPage() {
 
   useEffect(() => {
     const initializeUser = async () => {
-      setLoading(true);
       try {
         let userId = localStorage.getItem('private-chat-user-id');
         let user: User | null = null;
