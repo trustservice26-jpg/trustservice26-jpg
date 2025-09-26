@@ -24,18 +24,16 @@ export default function Home() {
     }
 
     setIsLoading(true);
-    // The user identity will be created or retrieved on the chat page itself.
-    // Here we just navigate to the corresponding chat room.
     router.push(`/chat/${chatId.trim()}`);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-background text-foreground">
-      <Card className="max-w-sm w-full">
+    <div className="flex flex-col items-center justify-center h-full bg-background text-foreground p-4">
+      <Card className="max-w-sm w-full bg-card border-border shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Private Chat</CardTitle>
+          <CardTitle className="text-3xl font-bold text-primary">CandidConnect</CardTitle>
           <CardDescription>
-            Enter a secret Chat ID to start or join a private conversation.
+            Enter a secret Chat ID to start a private conversation.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -45,7 +43,7 @@ export default function Home() {
               placeholder="Enter your secret Chat ID..."
               value={chatId}
               onChange={(e) => setChatId(e.target.value)}
-              className="text-center"
+              className="text-center bg-input border-border h-12 text-lg"
               disabled={isLoading}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -53,7 +51,7 @@ export default function Home() {
                 }
               }}
             />
-            <Button size="lg" onClick={handleStartChat} disabled={isLoading}>
+            <Button size="lg" onClick={handleStartChat} disabled={isLoading} className="h-12 text-lg font-semibold">
               {isLoading ? 'Entering Chat...' : 'Start / Join Chat'}
             </Button>
           </div>

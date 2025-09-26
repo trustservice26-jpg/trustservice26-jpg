@@ -43,7 +43,7 @@ export function ChatMessages({
   }, [messages]);
 
   return (
-    <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6">
+    <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message, index) => {
         const user = participants.find((u) => u.id === message.userId);
         const isCurrentUser = message.userId === currentUserId;
@@ -56,21 +56,11 @@ export function ChatMessages({
           <div
             key={message.id}
             className={cn(
-              'flex items-start gap-3',
+              'flex items-end gap-3',
               isCurrentUser && 'flex-row-reverse'
             )}
           >
-            {showAvatarAndName ? (
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={user?.avatarUrl} alt={user?.name} />
-                <AvatarFallback>
-                  {user?.name ? user.name[0] : 'U'}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div className="w-8" />
-            )}
-
+             <div className={cn("w-8", !showAvatarAndName && "w-8")} />
             <div
               className={cn(
                 'flex flex-col',
@@ -78,20 +68,26 @@ export function ChatMessages({
               )}
             >
               {showAvatarAndName && (
-                <div className="flex items-center gap-2">
+                 <div className={cn("flex items-center gap-2 mb-1", isCurrentUser && "flex-row-reverse")}>
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user?.avatarUrl} alt={user?.name} />
+                    <AvatarFallback>
+                      {user?.name ? user.name[0] : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                   <span className="font-semibold text-sm">{user?.name}</span>
                   <FormattedTimestamp timestamp={message.timestamp} />
                 </div>
               )}
               <div
                 className={cn(
-                  'group relative max-w-sm md:max-w-md lg:max-w-lg rounded-lg px-3 py-2 text-sm',
+                  'group relative max-w-sm md:max-w-md lg:max-w-lg rounded-xl px-3 py-2 text-sm shadow-md',
                   isCurrentUser
                     ? 'bg-primary text-primary-foreground rounded-br-none'
-                    : 'bg-card border rounded-bl-none'
+                    : 'bg-card text-card-foreground rounded-bl-none'
                 )}
               >
-                {message.text}
+                <p style={{whiteSpace: 'pre-wrap', wordWrap: 'break-word'}}>{message.text}</p>
               </div>
             </div>
              <div className="w-8" />
