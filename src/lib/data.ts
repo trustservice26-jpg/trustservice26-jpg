@@ -15,8 +15,7 @@ export type Message = {
   text: string;
   timestamp: string;
   userId: string;
-  roomId?: string;
   dmId?: string;
 };
 
-export const CURRENT_USER_ID = 'user-1';
+export const ADMIN_USER_ID = 'admin-user';

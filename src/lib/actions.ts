@@ -1,22 +1,24 @@
 'use server';
 
 import { profanityFiltering } from '@/ai/flows/profanity-filtering';
-import { CURRENT_USER_ID, type Message } from './data';
+import { type Message } from './data';
 import { createMessage } from './firestore';
 
 export async function sendMessage(
   text: string,
-  chatId: string,
-  chatType: 'room' | 'dm'
+  userId: string,
 ): Promise<{ success: boolean; newMessage?: Message; error?: string }> {
   if (!text.trim()) {
     return { success: false, error: 'Message cannot be empty.' };
+  }
+   if (!userId) {
+    return { success: false, error: 'User ID is missing.' };
   }
 
   try {
     const { filteredText } = await profanityFiltering({ text });
 
-    const newMessage = await createMessage(filteredText, chatId, chatType, CURRENT_USER_ID);
+    const newMessage = await createMessage(filteredText, userId);
 
     return { success: true, newMessage };
   } catch (error) {

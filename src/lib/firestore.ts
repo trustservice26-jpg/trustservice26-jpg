@@ -14,30 +14,10 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { firestore } from './firebase';
-import type { User, Message, Room } from './data';
-import { v4 as uuidv4 } from 'uuid';
+import type { User, Message } from './data';
+import { ADMIN_USER_ID } from './data';
 
 // --- User Functions ---
-
-// One-time fetch
-export async function getUsers(): Promise<User[]> {
-  const usersCol = collection(firestore, 'users');
-  const userSnapshot = await getDocs(usersCol);
-  const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-  return userList;
-}
-
-// Real-time listener
-export function getUsersRealtime(callback: (users: User[]) => void): () => void {
-  const usersCol = collection(firestore, 'users');
-  const q = query(usersCol);
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const userList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-    callback(userList);
-  });
-  return unsubscribe;
-}
-
 export async function getUser(userId: string): Promise<User | null> {
     if (!userId) return null;
     const userDocRef = doc(firestore, 'users', userId);
@@ -49,9 +29,12 @@ export async function getUser(userId: string): Promise<User | null> {
 }
 
 
-export async function addUser(name: string): Promise<User> {
+export async function createAnonymousUser(): Promise<User> {
+  const userCountSnapshot = await getDocs(collection(firestore, 'users'));
+  const userCount = userCountSnapshot.size;
+
   const newUser: Omit<User, 'id'> = {
-    name,
+    name: `Visitor-${userCount + 1}`,
     avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
     isOnline: true,
   };
@@ -59,53 +42,18 @@ export async function addUser(name: string): Promise<User> {
   return { id: docRef.id, ...newUser };
 }
 
-// --- Room Functions ---
-// One-time fetch
-export async function getRooms(): Promise<Room[]> {
-    const roomsCol = collection(firestore, 'rooms');
-    const roomSnapshot = await getDocs(roomsCol);
-    const roomList = roomSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
-    return roomList;
-}
-
-// Real-time listener
-export function getRoomsRealtime(callback: (rooms: Room[]) => void): () => void {
-  const roomsCol = collection(firestore, 'rooms');
-  const q = query(roomsCol);
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
-    callback(roomList);
-  });
-  return unsubscribe;
-}
-
 // --- Message Functions ---
-
 export function getMessages(
-  chatId: string,
-  chatType: 'room' | 'dm',
+  userId: string,
   callback: (messages: Message[]) => void
 ): () => void {
   const messagesCol = collection(firestore, 'messages');
-  let q;
-
-  if (chatType === 'room') {
-    q = query(
-      messagesCol,
-      where('roomId', '==', chatId),
-      orderBy('timestamp', 'asc')
-    );
-  } else {
-    // For DMs, we need to query for messages between the two users.
-    // We'll create a compound ID for the DM chat to query against.
-    const currentUser = 'user-1'; // Assuming a static current user for now
-    const dmId = [currentUser, chatId].sort().join('-');
-    q = query(
-      messagesCol,
-      where('dmId', '==', dmId),
-      orderBy('timestamp', 'asc')
-    );
-  }
+  const dmId = [ADMIN_USER_ID, userId].sort().join('-');
+  const q = query(
+    messagesCol,
+    where('dmId', '==', dmId),
+    orderBy('timestamp', 'asc')
+  );
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
     const messages = querySnapshot.docs.map(doc => ({
@@ -121,9 +69,7 @@ export function getMessages(
 
 export async function createMessage(
   text: string,
-  chatId: string,
-  chatType: 'room' | 'dm',
-  userId: string
+  userId: string,
 ): Promise<Message> {
   const newMessage: Omit<Message, 'id' | 'timestamp'> & { timestamp: Date } = {
     text,
@@ -131,12 +77,8 @@ export async function createMessage(
     timestamp: new Date(),
   };
 
-  if (chatType === 'room') {
-    newMessage.roomId = chatId;
-  } else {
-    const dmId = [userId, chatId].sort().join('-');
-    newMessage.dmId = dmId;
-  }
+  const dmId = [ADMIN_USER_ID, userId].sort().join('-');
+  newMessage.dmId = dmId;
 
   const docRef = await addDoc(collection(firestore, 'messages'), newMessage);
   
@@ -145,27 +87,18 @@ export async function createMessage(
       text: newMessage.text,
       userId: newMessage.userId,
       timestamp: newMessage.timestamp.toISOString(),
-      ...(newMessage.roomId && { roomId: newMessage.roomId }),
       ...(newMessage.dmId && { dmId: newMessage.dmId }),
   };
 }
 
 // Helper to create initial data if collections are empty
 export async function seedInitialData() {
-    const usersSnap = await getDocs(query(collection(firestore, 'users'), limit(1)));
-    if (usersSnap.empty) {
-        const defaultUsers = [
-            { id: 'user-1', name: 'You', avatarUrl: 'https://picsum.photos/seed/1/200/200', isOnline: true },
-            { id: 'user-2', name: 'Ben', avatarUrl: 'https://picsum.photos/seed/2/200/200', isOnline: true },
-        ];
-        for (const user of defaultUsers) {
-            await setDoc(doc(firestore, 'users', user.id), {name: user.name, avatarUrl: user.avatarUrl, isOnline: user.isOnline });
-        }
-    }
-
-    const roomsSnap = await getDocs(query(collection(firestore, 'rooms'), limit(1)));
-    if (roomsSnap.empty) {
-        const generalRoomRef = doc(firestore, 'rooms', 'general');
-        await setDoc(generalRoomRef, { name: 'general' });
+    const adminUserDoc = await getDoc(doc(firestore, 'users', ADMIN_USER_ID));
+    if (!adminUserDoc.exists()) {
+       await setDoc(doc(firestore, 'users', ADMIN_USER_ID), {
+         name: 'Admin', 
+         avatarUrl: `https://picsum.photos/seed/admin/200/200`, 
+         isOnline: true 
+       });
     }
 }

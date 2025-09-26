@@ -8,6 +8,7 @@ import { MessageInput } from './message-input';
 
 type ChatUIProps = {
   chatId: string;
+  currentUserId: string;
   chatType: 'room' | 'dm';
   chatName: string;
   initialMessages: Message[];
@@ -18,6 +19,7 @@ type ChatUIProps = {
 
 export function ChatUI({
   chatId,
+  currentUserId,
   chatType,
   chatName,
   initialMessages,
@@ -27,15 +29,9 @@ export function ChatUI({
 }: ChatUIProps) {
   const [messages, setMessages] = useState(initialMessages);
   
-  // Use useEffect to update messages when initialMessages prop changes
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
-
-  const handleNewMessage = (newMessage: Message) => {
-    // With real-time updates from Firestore, we no longer need to manually add messages.
-    // The onSnapshot listener in the page component will handle it.
-  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -46,13 +42,13 @@ export function ChatUI({
       <ChatMessages
         messages={messages}
         participants={initialParticipants}
+        currentUserId={currentUserId}
         blockedUsers={blockedUsers}
         handleBlockUser={handleBlockUser}
       />
       <MessageInput
-        chatId={chatId}
-        chatType={chatType}
-        onNewMessage={handleNewMessage}
+        userId={chatId}
+        onNewMessage={() => {}}
       />
     </div>
   );

@@ -4,15 +4,13 @@ import { useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Send } from 'lucide-react';
 import { sendMessage } from '@/lib/actions';
-import type { Message } from '@/lib/data';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 interface MessageInputProps {
-  chatId: string;
-  chatType: 'room' | 'dm';
-  onNewMessage: (message: Message) => void;
+  userId: string;
+  onNewMessage: () => void;
 }
 
 function SubmitButton() {
@@ -25,8 +23,7 @@ function SubmitButton() {
 }
 
 export function MessageInput({
-  chatId,
-  chatType,
+  userId,
   onNewMessage,
 }: MessageInputProps) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -36,10 +33,10 @@ export function MessageInput({
     const text = formData.get('message') as string;
     if (!text || text.trim() === '') return;
 
-    const result = await sendMessage(text, chatId, chatType);
+    const result = await sendMessage(text, userId);
 
-    if (result.success && result.newMessage) {
-      onNewMessage(result.newMessage);
+    if (result.success) {
+      onNewMessage();
       formRef.current?.reset();
     } else {
       toast({
