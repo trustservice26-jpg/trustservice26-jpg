@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { CURRENT_USER_ID, rooms, users, type User } from '@/lib/data';
 import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
 
 export default function AppProviders({
   children,
@@ -35,7 +36,6 @@ export default function AppProviders({
 
   const handleDeleteUser = (userId: string) => {
     setDeletedUsers((prev) => [...prev, userId]);
-    setBlockedUsers((prev) => [...prev, userId]);
     const user = users.find((u) => u.id === userId);
     toast({
       title: 'User Removed',
@@ -92,10 +92,18 @@ export default function AppProviders({
                       isActive={pathname === `/dm/${user.id}`}
                       className="flex justify-start items-center gap-3 w-full"
                     >
-                      <Avatar className="w-6 h-6">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                        <AvatarFallback>{user.name[0]}</AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={user.avatarUrl} alt={user.name} />
+                          <AvatarFallback>{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div
+                          className={cn(
+                            'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-sidebar-background',
+                            user.isOnline ? 'bg-green-500' : 'bg-gray-400'
+                          )}
+                        />
+                      </div>
                       <span>{user.name}</span>
                     </SidebarMenuButton>
                   </Link>
@@ -134,7 +142,7 @@ export default function AppProviders({
                     blockedUsers: string[];
                     handleBlockUser: (userId: string) => void;
                   }>,
-                  { blockedUsers, handleBlockUser: handleDeleteUser }
+                  { blockedUsers, handleBlockUser: setBlockedUsers }
                 )
               : children)}
         </div>

@@ -2,6 +2,7 @@ export type User = {
   id: string;
   name: string;
   avatarUrl: string;
+  isOnline: boolean;
 };
 
 export type Room = {
@@ -21,13 +22,13 @@ export type Message = {
 export const CURRENT_USER_ID = 'user-1';
 
 export const users: User[] = [
-  { id: 'user-1', name: 'You', avatarUrl: 'https://picsum.photos/seed/1/200/200' },
-  { id: 'user-2', name: 'Ben', avatarUrl: 'https://picsum.photos/seed/2/200/200' },
-  { id: 'user-3', name: 'Chloe', avatarUrl: 'https://picsum.photos/seed/3/200/200' },
-  { id: 'user-4', name: 'David', avatarUrl: 'https://picsum.photos/seed/4/200/200' },
-  { id: 'user-5', name: 'Emily', avatarUrl: 'https://picsum.photos/seed/5/200/200' },
-  { id: 'user-6', name: 'Frank', avatarUrl: 'https://picsum.photos/seed/6/200/200' },
-  { id: 'user-7', name: 'Grace', avatarUrl: 'https://picsum.photos/seed/7/200/200' },
+  { id: 'user-1', name: 'You', avatarUrl: 'https://picsum.photos/seed/1/200/200', isOnline: true },
+  { id: 'user-2', name: 'Ben', avatarUrl: 'https://picsum.photos/seed/2/200/200', isOnline: true },
+  { id: 'user-3', name: 'Chloe', avatarUrl: 'https://picsum.photos/seed/3/200/200', isOnline: false },
+  { id: 'user-4', name: 'David', avatarUrl: 'https://picsum.photos/seed/4/200/200', isOnline: true },
+  { id: 'user-5', name: 'Emily', avatarUrl: 'https://picsum.photos/seed/5/200/200', isOnline: false },
+  { id: 'user-6', name: 'Frank', avatarUrl: 'https://picsum.photos/seed/6/200/200', isOnline: false },
+  { id: 'user-7', name: 'Grace', avatarUrl: 'https://picsum.photos/seed/7/200/200', isOnline: true },
 ];
 
 export const rooms: Room[] = [
