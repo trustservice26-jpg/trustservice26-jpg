@@ -21,20 +21,26 @@ export default function PrivateChatPage() {
   useEffect(() => {
     const initializeUser = async () => {
       setLoading(true);
-      let userId = localStorage.getItem('private-chat-user-id');
-      let user: User | null = null;
+      try {
+        let userId = localStorage.getItem('private-chat-user-id');
+        let user: User | null = null;
 
-      if (userId) {
-        user = await getUser(userId);
+        if (userId) {
+          user = await getUser(userId);
+        }
+
+        if (!user) {
+          const newUser = await createAnonymousUser();
+          localStorage.setItem('private-chat-user-id', newUser.id);
+          user = newUser;
+        }
+        
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Failed to initialize user:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      if (!user) {
-        user = await createAnonymousUser();
-        localStorage.setItem('private-chat-user-id', user.id);
-      }
-      
-      setCurrentUser(user);
-      setLoading(false);
     };
 
     initializeUser();
