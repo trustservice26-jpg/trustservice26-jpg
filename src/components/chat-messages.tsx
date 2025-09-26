@@ -26,7 +26,9 @@ function FormattedTimestamp({ timestamp }: { timestamp: string }) {
   const [formattedTime, setFormattedTime] = useState('');
 
   useEffect(() => {
-    setFormattedTime(format(new Date(timestamp), 'h:mm a'));
+    if (timestamp) {
+      setFormattedTime(format(new Date(timestamp), 'h:mm a'));
+    }
   }, [timestamp]);
 
   if (!formattedTime) {

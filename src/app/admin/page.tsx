@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import {
   getAllUsers,
   getMessages,
@@ -81,7 +81,7 @@ function AdminPage() {
       <main className="flex-1 flex flex-col">
         {selectedUser ? (
           <ChatUI
-            chatId={ADMIN_USER_ID}
+            chatId={selectedUser.id}
             currentUserId={ADMIN_USER_ID}
             chatType="dm"
             chatName={`Chat with ${selectedUser.name}`}
