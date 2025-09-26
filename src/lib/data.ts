@@ -33,8 +33,6 @@ export const users: User[] = [
 
 export const rooms: Room[] = [
   { id: 'general', name: 'general' },
-  { id: 'tech-talk', name: 'tech-talk' },
-  { id: 'random', name: 'random' },
 ];
 
 const now = new Date();
@@ -45,15 +43,6 @@ export const messages: Message[] = [
   { id: 'msg-2', text: 'Hey everyone!', timestamp: new Date(now.getTime() - 9 * 60000).toISOString(), userId: 'user-3', roomId: 'general' },
   { id: 'msg-3', text: 'Hello! Glad to be here.', timestamp: new Date(now.getTime() - 8 * 60000).toISOString(), userId: 'user-1', roomId: 'general' },
   
-  // Tech Talk Room
-  { id: 'msg-4', text: 'Has anyone tried the new Next.js update?', timestamp: new Date(now.getTime() - 5 * 60000).toISOString(), userId: 'user-4', roomId: 'tech-talk' },
-  { id: 'msg-5', text: 'Yes! The app router is a game changer.', timestamp: new Date(now.getTime() - 4 * 60000).toISOString(), userId: 'user-5', roomId: 'tech-talk' },
-  { id: 'msg-6', text: 'I\'m still getting used to server components.', timestamp: new Date(now.getTime() - 3 * 60000).toISOString(), userId: 'user-1', roomId: 'tech-talk' },
-
-  // Random Room
-  { id: 'msg-7', text: 'What is the best pizza topping?', timestamp: new Date(now.getTime() - 2 * 60000).toISOString(), userId: 'user-6', roomId: 'random' },
-  { id: 'msg-8', text: 'Pineapple, no question.', timestamp: new Date(now.getTime() - 1 * 60000).toISOString(), userId: 'user-7', roomId: 'random' },
-
   // DM with Ben (user-2)
   { id: 'dm-1', text: 'Hey, how are you?', timestamp: new Date(now.getTime() - 5 * 60000).toISOString(), userId: 'user-1', dmId: 'user-2' },
   { id: 'dm-2', text: 'Doing great! Just working on a new project. You?', timestamp: new Date(now.getTime() - 4 * 60000).toISOString(), userId: 'user-2', dmId: 'user-1' },
