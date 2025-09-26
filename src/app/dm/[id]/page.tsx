@@ -3,7 +3,7 @@
 import { getDmMessages, users as initialUsers, CURRENT_USER_ID, type User } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { ChatUI } from '@/components/chat-ui';
-import { useState } from 'react';
+import { useState, use } from 'react';
 
 export default function DMPage({ params }: { params: { id: string } }) {
   const [users, setUsers] = useState(initialUsers);
