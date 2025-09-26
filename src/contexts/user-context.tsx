@@ -1,20 +1,33 @@
 'use client';
 
-import { users as initialUsers, type User } from '@/lib/data';
-import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import { type User } from '@/lib/data';
+import { getUsers, seedInitialData } from '@/lib/firestore';
+import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 
 interface UserContextType {
   users: User[];
   setUsers: Dispatch<SetStateAction<User[]>>;
+  loading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      await seedInitialData();
+      const dbUsers = await getUsers();
+      setUsers(dbUsers);
+      setLoading(false);
+    };
+    fetchUsers();
+  }, []);
 
   return (
-    <UserContext.Provider value={{ users, setUsers }}>
+    <UserContext.Provider value={{ users, setUsers, loading }}>
       {children}
     </UserContext.Provider>
   );

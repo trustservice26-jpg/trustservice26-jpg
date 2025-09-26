@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Hash, MessageCircle, Plus, Users, Trash2 } from 'lucide-react';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CURRENT_USER_ID, rooms, type User } from '@/lib/data';
+import { CURRENT_USER_ID, type User, type Room } from '@/lib/data';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -35,43 +35,53 @@ import {
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { UserProvider, useUsers } from '@/contexts/user-context';
+import { getRooms, addUser } from '@/lib/firestore';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
-  const { users, setUsers } = useUsers();
+  const { users, setUsers, loading } = useUsers();
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
-  const [blockedUsers, setBlockedUsers] = React.useState<string[]>([]);
+  
+  useEffect(() => {
+    getRooms().then(setRooms);
+  }, []);
 
   const handleDeleteUser = (userId: string) => {
+    // Note: Deleting users from Firestore is not implemented in this version
+    // to prevent accidental data loss in the prototype.
     const user = users.find((u) => u.id === userId);
     setUsers((prev) => prev.filter((u) => u.id !== userId));
     toast({
       title: 'User Removed',
-      description: `You have removed ${user?.name} from your direct messages.`,
+      description: `${user?.name} has been removed from your list for this session.`,
     });
   };
   
-  const handleAddUser = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('name') as string;
 
     if (name.trim()) {
-      const newUser: User = {
-        id: `user-${Date.now()}`,
-        name: name.trim(),
-        avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
-        isOnline: true,
-      };
-      setUsers(prev => [...prev, newUser]);
-      toast({
-        title: 'User Added',
-        description: `${newUser.name} has been added to your direct messages.`,
-      });
-      setIsAddUserDialogOpen(false);
-      form.reset();
+      try {
+        const newUser = await addUser(name.trim());
+        setUsers(prev => [...prev, newUser]);
+        toast({
+          title: 'User Added',
+          description: `${newUser.name} has been added.`,
+        });
+        setIsAddUserDialogOpen(false);
+        form.reset();
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to add user.',
+        });
+      }
     }
   };
 
@@ -102,7 +112,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                   <Link href={`/room/${room.id}`} className="w-full">
                     <SidebarMenuButton
                       isActive={pathname === `/room/${room.id}`}
-                      className="w-full"
+                      className="w-full capitalize"
                     >
                       <span># {room.name}</span>
                     </SidebarMenuButton>
@@ -115,7 +125,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 <Users />
                 Direct Messages
               </SidebarGroupLabel>
-              {filteredDms.map((user) => (
+              {loading && <p className="p-2 text-xs text-muted-foreground">Loading users...</p>}
+              {!loading && filteredDms.map((user) => (
                 <SidebarMenuItem key={user.id} className="group/item">
                   <Link href={`/dm/${user.id}`} className="w-full">
                     <SidebarMenuButton
@@ -137,14 +148,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                       <span>{user.name}</span>
                     </SidebarMenuButton>
                   </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100"
-                    onClick={() => handleDeleteUser(user.id)}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
+                  {user.id !== 'user-1' && user.id !== 'user-2' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100"
+                      onClick={() => handleDeleteUser(user.id)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarGroup>
@@ -193,19 +206,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               </h1>
             </div>
           </header>
-          {children &&
-            (React.isValidElement<{
-              blockedUsers: string[];
-              handleBlockUser: (userId: string) => void;
-            }>(children)
-              ? React.cloneElement(
-                  children as React.ReactElement<{
-                    blockedUsers: string[];
-                    handleBlockUser: (userId: string) => void;
-                  }>,
-                  { blockedUsers, handleBlockUser: setBlockedUsers }
-                )
-              : children)}
+          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>

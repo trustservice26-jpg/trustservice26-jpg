@@ -2,6 +2,7 @@
 
 import { profanityFiltering } from '@/ai/flows/profanity-filtering';
 import { CURRENT_USER_ID, type Message } from './data';
+import { createMessage } from './firestore';
 
 export async function sendMessage(
   text: string,
@@ -13,27 +14,13 @@ export async function sendMessage(
   }
 
   try {
-    const { filteredText, isProfane } = await profanityFiltering({ text });
+    const { filteredText } = await profanityFiltering({ text });
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      text: filteredText,
-      timestamp: new Date().toISOString(),
-      userId: CURRENT_USER_ID,
-    };
-
-    if (chatType === 'room') {
-      newMessage.roomId = chatId;
-    } else {
-      newMessage.dmId = chatId;
-    }
-
-    // In a real application, you would save the message to a database here.
-    // For this scaffold, we just return the new message object.
+    const newMessage = await createMessage(filteredText, chatId, chatType, CURRENT_USER_ID);
 
     return { success: true, newMessage };
   } catch (error) {
     console.error('Error sending message:', error);
-    return { success: false, error: 'An unexpected error occurred.' };
+    return { success: false, error: 'An unexpected error occurred while sending the message.' };
   }
 }

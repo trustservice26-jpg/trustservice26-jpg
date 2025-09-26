@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Message, User } from '@/lib/data';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
@@ -26,10 +26,15 @@ export function ChatUI({
   handleBlockUser = () => {},
 }: ChatUIProps) {
   const [messages, setMessages] = useState(initialMessages);
-  const [participants, setParticipants] = useState(initialParticipants);
+  
+  // Use useEffect to update messages when initialMessages prop changes
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
 
   const handleNewMessage = (newMessage: Message) => {
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    // With real-time updates from Firestore, we no longer need to manually add messages.
+    // The onSnapshot listener in the page component will handle it.
   };
 
   return (
@@ -40,7 +45,7 @@ export function ChatUI({
       />
       <ChatMessages
         messages={messages}
-        participants={participants}
+        participants={initialParticipants}
         blockedUsers={blockedUsers}
         handleBlockUser={handleBlockUser}
       />

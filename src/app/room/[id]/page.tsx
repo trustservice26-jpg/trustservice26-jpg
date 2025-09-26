@@ -1,31 +1,69 @@
 'use client';
 
-import { getRoomMessages, rooms, users, CURRENT_USER_ID } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { ChatUI } from '@/components/chat-ui';
-import { use } from 'react';
+import { useState, use, useEffect } from 'react';
+import { useUsers } from '@/contexts/user-context';
+import { getMessages, getRooms } from '@/lib/firestore';
+import type { Message, Room, User } from '@/lib/data';
+import { CURRENT_USER_ID } from '@/lib/data';
 
 export default function RoomPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
-  const room = rooms.find((r) => r.id === resolvedParams.id);
-  if (!room) {
-    notFound();
+  const { users, loading: usersLoading } = useUsers();
+  const [room, setRoom] = useState<Room | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [participants, setParticipants] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRoom = async () => {
+      const rooms = await getRooms();
+      const currentRoom = rooms.find((r) => r.id === resolvedParams.id);
+      if (currentRoom) {
+        setRoom(currentRoom);
+      } else {
+        notFound();
+      }
+    };
+    fetchRoom();
+  }, [resolvedParams.id]);
+  
+  useEffect(() => {
+    if (room) {
+      const unsubscribe = getMessages(room.id, 'room', (newMessages) => {
+        setMessages(newMessages);
+        
+        if (!usersLoading) {
+            const participantIds = new Set(newMessages.map(m => m.userId));
+            participantIds.add(CURRENT_USER_ID);
+
+            const resolvedParticipants = Array.from(participantIds)
+                .map(userId => users.find(u => u.id === userId))
+                .filter(Boolean) as User[];
+            
+            setParticipants(resolvedParticipants);
+            setLoading(false);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [room, users, usersLoading]);
+
+  if (loading || usersLoading) {
+    return <div className="flex h-full items-center justify-center"><p>Loading room...</p></div>;
   }
-
-  const initialMessages = getRoomMessages(resolvedParams.id);
-  const participantIds = new Set(initialMessages.map(m => m.userId));
-  participantIds.add(CURRENT_USER_ID);
-
-  const participants = Array.from(participantIds)
-    .map(userId => users.find(u => u.id === userId))
-    .filter(Boolean) as any[];
+  
+  if (!room) {
+    return notFound();
+  }
 
   return (
     <ChatUI
       chatId={room.id}
       chatType="room"
       chatName={room.name}
-      initialMessages={initialMessages}
+      initialMessages={messages}
       participants={participants}
     />
   );
