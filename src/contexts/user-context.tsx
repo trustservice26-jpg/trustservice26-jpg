@@ -1,7 +1,7 @@
 'use client';
 
 import { type User } from '@/lib/data';
-import { getUsers, seedInitialData } from '@/lib/firestore';
+import { getUsersRealtime, seedInitialData } from '@/lib/firestore';
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 
 interface UserContextType {
@@ -17,13 +17,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      await seedInitialData();
-      const dbUsers = await getUsers();
-      setUsers(dbUsers);
-      setLoading(false);
+    const initialize = async () => {
+      await seedInitialData(); 
+      const unsubscribe = getUsersRealtime((dbUsers) => {
+        setUsers(dbUsers);
+        setLoading(false);
+      });
+      return () => unsubscribe();
     };
-    fetchUsers();
+    
+    const unsubscribePromise = initialize();
+
+    return () => {
+      unsubscribePromise.then(unsub => unsub && unsub());
+    };
   }, []);
 
   return (

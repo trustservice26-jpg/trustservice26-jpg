@@ -19,11 +19,23 @@ import { v4 as uuidv4 } from 'uuid';
 
 // --- User Functions ---
 
+// One-time fetch
 export async function getUsers(): Promise<User[]> {
   const usersCol = collection(firestore, 'users');
   const userSnapshot = await getDocs(usersCol);
   const userList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
   return userList;
+}
+
+// Real-time listener
+export function getUsersRealtime(callback: (users: User[]) => void): () => void {
+  const usersCol = collection(firestore, 'users');
+  const q = query(usersCol);
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const userList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    callback(userList);
+  });
+  return unsubscribe;
 }
 
 export async function getUser(userId: string): Promise<User | null> {
@@ -48,18 +60,23 @@ export async function addUser(name: string): Promise<User> {
 }
 
 // --- Room Functions ---
+// One-time fetch
 export async function getRooms(): Promise<Room[]> {
     const roomsCol = collection(firestore, 'rooms');
     const roomSnapshot = await getDocs(roomsCol);
     const roomList = roomSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
-    
-    if (roomList.length === 0) {
-        const generalRoomRef = doc(firestore, 'rooms', 'general');
-        await setDoc(generalRoomRef, { name: 'general' });
-        return [{ id: 'general', name: 'general' }];
-    }
-    
     return roomList;
+}
+
+// Real-time listener
+export function getRoomsRealtime(callback: (rooms: Room[]) => void): () => void {
+  const roomsCol = collection(firestore, 'rooms');
+  const q = query(roomsCol);
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
+    callback(roomList);
+  });
+  return unsubscribe;
 }
 
 // --- Message Functions ---
@@ -135,8 +152,8 @@ export async function createMessage(
 
 // Helper to create initial data if collections are empty
 export async function seedInitialData() {
-    const users = await getUsers();
-    if (users.length === 0) {
+    const usersSnap = await getDocs(query(collection(firestore, 'users'), limit(1)));
+    if (usersSnap.empty) {
         const defaultUsers = [
             { id: 'user-1', name: 'You', avatarUrl: 'https://picsum.photos/seed/1/200/200', isOnline: true },
             { id: 'user-2', name: 'Ben', avatarUrl: 'https://picsum.photos/seed/2/200/200', isOnline: true },
@@ -145,5 +162,10 @@ export async function seedInitialData() {
             await setDoc(doc(firestore, 'users', user.id), {name: user.name, avatarUrl: user.avatarUrl, isOnline: user.isOnline });
         }
     }
-    await getRooms(); // This will create the 'general' room if it doesn't exist
+
+    const roomsSnap = await getDocs(query(collection(firestore, 'rooms'), limit(1)));
+    if (roomsSnap.empty) {
+        const generalRoomRef = doc(firestore, 'rooms', 'general');
+        await setDoc(generalRoomRef, { name: 'general' });
+    }
 }

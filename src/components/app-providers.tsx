@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CURRENT_USER_ID, type User, type Room } from '@/lib/data';
+import { CURRENT_USER_ID, type User } from '@/lib/data';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -35,18 +35,15 @@ import {
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { UserProvider, useUsers } from '@/contexts/user-context';
-import { getRooms, addUser } from '@/lib/firestore';
+import { RoomProvider, useRooms } from '@/contexts/room-context';
+import { addUser } from '@/lib/firestore';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
-  const { users, setUsers, loading } = useUsers();
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const { users, setUsers, loading: usersLoading } = useUsers();
+  const { rooms, loading: roomsLoading } = useRooms();
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
-  
-  useEffect(() => {
-    getRooms().then(setRooms);
-  }, []);
 
   const handleDeleteUser = (userId: string) => {
     // Note: Deleting users from Firestore is not implemented in this version
@@ -68,7 +65,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (name.trim()) {
       try {
         const newUser = await addUser(name.trim());
-        setUsers(prev => [...prev, newUser]);
+        // No need to setUsers here, onSnapshot will handle it.
         toast({
           title: 'User Added',
           description: `${newUser.name} has been added.`,
@@ -107,7 +104,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 <Hash />
                 Chat Rooms
               </SidebarGroupLabel>
-              {rooms.map((room) => (
+              {roomsLoading && <p className="p-2 text-xs text-muted-foreground">Loading rooms...</p>}
+              {!roomsLoading && rooms.map((room) => (
                 <SidebarMenuItem key={room.id}>
                   <Link href={`/room/${room.id}`} className="w-full">
                     <SidebarMenuButton
@@ -125,8 +123,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 <Users />
                 Direct Messages
               </SidebarGroupLabel>
-              {loading && <p className="p-2 text-xs text-muted-foreground">Loading users...</p>}
-              {!loading && filteredDms.map((user) => (
+              {usersLoading && <p className="p-2 text-xs text-muted-foreground">Loading users...</p>}
+              {!usersLoading && filteredDms.map((user) => (
                 <SidebarMenuItem key={user.id} className="group/item">
                   <Link href={`/dm/${user.id}`} className="w-full">
                     <SidebarMenuButton
@@ -221,7 +219,9 @@ export default function AppProviders({
 }) {
   return (
     <UserProvider>
-      <AppLayout>{children}</AppLayout>
+      <RoomProvider>
+        <AppLayout>{children}</AppLayout>
+      </RoomProvider>
     </UserProvider>
   );
 }

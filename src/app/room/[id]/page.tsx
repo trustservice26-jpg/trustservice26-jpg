@@ -4,30 +4,30 @@ import { notFound } from 'next/navigation';
 import { ChatUI } from '@/components/chat-ui';
 import { useState, use, useEffect } from 'react';
 import { useUsers } from '@/contexts/user-context';
-import { getMessages, getRooms } from '@/lib/firestore';
+import { getMessages } from '@/lib/firestore';
+import { useRooms } from '@/contexts/room-context';
 import type { Message, Room, User } from '@/lib/data';
 import { CURRENT_USER_ID } from '@/lib/data';
 
 export default function RoomPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
   const { users, loading: usersLoading } = useUsers();
+  const { rooms, loading: roomsLoading } = useRooms();
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [participants, setParticipants] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRoom = async () => {
-      const rooms = await getRooms();
+    if (!roomsLoading) {
       const currentRoom = rooms.find((r) => r.id === resolvedParams.id);
       if (currentRoom) {
         setRoom(currentRoom);
       } else {
         notFound();
       }
-    };
-    fetchRoom();
-  }, [resolvedParams.id]);
+    }
+  }, [resolvedParams.id, rooms, roomsLoading]);
   
   useEffect(() => {
     if (room) {
@@ -50,7 +50,7 @@ export default function RoomPage({ params }: { params: { id: string } }) {
     }
   }, [room, users, usersLoading]);
 
-  if (loading || usersLoading) {
+  if (loading || usersLoading || roomsLoading) {
     return <div className="flex h-full items-center justify-center"><p>Loading room...</p></div>;
   }
   
