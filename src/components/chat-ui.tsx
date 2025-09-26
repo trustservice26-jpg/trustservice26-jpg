@@ -49,7 +49,7 @@ export function ChatUI({
     <div className="flex flex-col h-full bg-background">
       <ChatHeader
         type="room"
-        name={`Chat: ${chatId}`}
+        name={chatId}
       />
       <ChatMessages
         messages={messages}
