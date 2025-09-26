@@ -28,6 +28,21 @@ export async function getUser(userId: string): Promise<User | null> {
     return null;
 }
 
+export function getAllUsers(callback: (users: User[]) => void): () => void {
+  const usersCol = collection(firestore, 'users');
+  const q = query(usersCol);
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const users = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    } as User));
+    callback(users);
+  });
+
+  return unsubscribe;
+}
+
 
 export async function createAnonymousUser(): Promise<User> {
   const userCountSnapshot = await getDocs(collection(firestore, 'users'));
