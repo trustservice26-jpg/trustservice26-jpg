@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Hash, MessageCircle, Trash2, Users, X } from 'lucide-react';
+import { Hash, MessageCircle, Trash2, Users } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CURRENT_USER_ID, rooms, users } from '@/lib/data';
+import { CURRENT_USER_ID, rooms, users, type User } from '@/lib/data';
 import { Button } from './ui/button';
 
 export default function AppProviders({
@@ -30,30 +30,23 @@ export default function AppProviders({
 }) {
   const pathname = usePathname();
   const { toast } = useToast();
+  const [deletedUsers, setDeletedUsers] = useState<string[]>([]);
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
 
-  const handleBlockUser = (userId: string) => {
+  const handleDeleteUser = (userId: string) => {
+    setDeletedUsers((prev) => [...prev, userId]);
     setBlockedUsers((prev) => [...prev, userId]);
     const user = users.find((u) => u.id === userId);
     toast({
-      title: 'User Blocked',
-      description: `You have blocked ${user?.name}. You will no longer see their messages.`,
+      title: 'User Removed',
+      description: `You have removed ${user?.name} from your direct messages.`,
     });
   };
 
-  const handleUnblockUser = (userId: string) => {
-    setBlockedUsers((prev) => prev.filter((id) => id !== userId));
-    const user = users.find((u) => u.id === userId);
-    toast({
-      title: 'User Unblocked',
-      description: `You have unblocked ${user?.name}.`,
-    });
-  };
-
-  const isUserBlocked = (userId: string) => blockedUsers.includes(userId);
+  const isUserDeleted = (userId: string) => deletedUsers.includes(userId);
 
   const filteredDms = users.filter(
-    (u) => u.id !== CURRENT_USER_ID && !isUserBlocked(u.id)
+    (u) => u.id !== CURRENT_USER_ID && !isUserDeleted(u.id)
   );
 
   return (
@@ -110,45 +103,12 @@ export default function AppProviders({
                     variant="ghost"
                     size="icon"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100"
-                    onClick={() => handleBlockUser(user.id)}
+                    onClick={() => handleDeleteUser(user.id)}
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </SidebarMenuItem>
               ))}
-              {blockedUsers.length > 0 && (
-                <>
-                  <SidebarGroupLabel className="flex items-center gap-2 mt-4 text-muted-foreground">
-                    Blocked Users
-                  </SidebarGroupLabel>
-                  {users
-                    .filter((u) => isUserBlocked(u.id))
-                    .map((user) => (
-                      <SidebarMenuItem key={user.id}>
-                        <div className="flex justify-between items-center w-full text-sm text-muted-foreground px-2">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-6 h-6">
-                              <AvatarImage
-                                src={user.avatarUrl}
-                                alt={user.name}
-                              />
-                              <AvatarFallback>{user.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <span className="line-through">{user.name}</span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => handleUnblockUser(user.id)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </SidebarMenuItem>
-                    ))}
-                </>
-              )}
             </SidebarGroup>
           </SidebarMenu>
         </SidebarContent>
@@ -168,15 +128,13 @@ export default function AppProviders({
             (React.isValidElement<{
               blockedUsers: string[];
               handleBlockUser: (userId: string) => void;
-              participants: User[];
             }>(children)
               ? React.cloneElement(
                   children as React.ReactElement<{
                     blockedUsers: string[];
                     handleBlockUser: (userId: string) => void;
-                    participants: User[];
                   }>,
-                  { blockedUsers, handleBlockUser }
+                  { blockedUsers, handleBlockUser: handleDeleteUser }
                 )
               : children)}
         </div>
