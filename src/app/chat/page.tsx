@@ -30,7 +30,9 @@ function ChatPage() {
       }
       if (!user) {
         user = await createAnonymousUser();
-        localStorage.setItem('candid-connect-user-id', user.id);
+        if(user) {
+          localStorage.setItem('candid-connect-user-id', user.id);
+        }
       }
       setCurrentUser(user);
       setLoading(false);
