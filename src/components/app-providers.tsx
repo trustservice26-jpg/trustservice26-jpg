@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Hash, MessageCircle, Trash2, Users } from 'lucide-react';
+import { Hash, MessageCircle, Plus, Trash2, Users } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -17,12 +17,24 @@ import {
   SidebarGroupLabel,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CURRENT_USER_ID, rooms, users, type User } from '@/lib/data';
+import { CURRENT_USER_ID, rooms, users as initialUsers, type User } from '@/lib/data';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 export default function AppProviders({
   children,
@@ -31,8 +43,10 @@ export default function AppProviders({
 }) {
   const pathname = usePathname();
   const { toast } = useToast();
+  const [users, setUsers] = useState(initialUsers);
   const [deletedUsers, setDeletedUsers] = useState<string[]>([]);
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
 
   const handleDeleteUser = (userId: string) => {
     setDeletedUsers((prev) => [...prev, userId]);
@@ -42,6 +56,29 @@ export default function AppProviders({
       description: `You have removed ${user?.name} from your direct messages.`,
     });
   };
+  
+  const handleAddUser = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = formData.get('name') as string;
+
+    if (name.trim()) {
+      const newUser: User = {
+        id: `user-${Date.now()}`,
+        name: name.trim(),
+        avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
+        isOnline: true,
+      };
+      setUsers(prev => [...prev, newUser]);
+      toast({
+        title: 'User Added',
+        description: `${newUser.name} has been added to your direct messages.`,
+      });
+      setIsAddUserDialogOpen(false);
+    }
+  };
+
 
   const isUserDeleted = (userId: string) => deletedUsers.includes(userId);
 
@@ -120,6 +157,37 @@ export default function AppProviders({
             </SidebarGroup>
           </SidebarMenu>
         </SidebarContent>
+        <SidebarFooter>
+           <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Add User
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New User</DialogTitle>
+                <DialogDescription>
+                  Enter the name of the new user to add them to your direct messages.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddUser}>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="name" className="text-right">
+                        Name
+                      </Label>
+                      <Input id="name" name="name" className="col-span-3" required />
+                    </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Add User</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <div className="flex flex-col h-full">
