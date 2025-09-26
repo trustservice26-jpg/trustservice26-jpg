@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Hash, MessageCircle, Plus, Users, Trash2 } from 'lucide-react';
-
 import {
   SidebarProvider,
   Sidebar,
@@ -21,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CURRENT_USER_ID, rooms, users as initialUsers, type User } from '@/lib/data';
+import { CURRENT_USER_ID, rooms, type User } from '@/lib/data';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -35,15 +34,12 @@ import {
 } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { UserProvider, useUsers } from '@/contexts/user-context';
 
-export default function AppProviders({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
-  const [users, setUsers] = React.useState(initialUsers);
+  const { users, setUsers } = useUsers();
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
   const [blockedUsers, setBlockedUsers] = React.useState<string[]>([]);
 
@@ -75,6 +71,7 @@ export default function AppProviders({
         description: `${newUser.name} has been added to your direct messages.`,
       });
       setIsAddUserDialogOpen(false);
+      form.reset();
     }
   };
 
@@ -212,5 +209,18 @@ export default function AppProviders({
         </div>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+
+export default function AppProviders({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <UserProvider>
+      <AppLayout>{children}</AppLayout>
+    </UserProvider>
   );
 }
