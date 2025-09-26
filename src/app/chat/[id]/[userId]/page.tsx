@@ -27,6 +27,11 @@ export default function ChatRoomPage() {
       setLoading(true);
       if (!userId) {
         console.error("User ID is missing from URL");
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "User ID is missing. Cannot load chat.",
+        });
         setLoading(false);
         return;
       }
