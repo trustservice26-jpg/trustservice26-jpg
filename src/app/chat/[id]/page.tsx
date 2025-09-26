@@ -18,6 +18,7 @@ function PrivateChatPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const initializeUser = async () => {
+      setLoading(true);
       let userId = localStorage.getItem('private-chat-user-id');
       let user: User | null = null;
       if (userId) {
