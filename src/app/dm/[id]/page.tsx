@@ -14,7 +14,7 @@ export default function DMPage({ params }: { params: { id: string } }) {
   
   useEffect(() => {
     if (!otherUser) {
-      const tempUser: User = { id: resolvedParams.id, name: 'New User', avatarUrl: '', isOnline: true };
+      const tempUser: User = { id: resolvedParams.id, name: 'New User', avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`, isOnline: true };
       if (!users.find(u => u.id === resolvedParams.id)) {
         // This is a temporary user, let's add them to the context
         setUsers(prevUsers => [...prevUsers, tempUser]);
@@ -22,23 +22,23 @@ export default function DMPage({ params }: { params: { id: string } }) {
     }
   }, [resolvedParams.id, otherUser, users, setUsers]);
 
-
-  const initialMessages = getDmMessages(CURRENT_USER_ID, resolvedParams.id);
-  const currentUser = users.find(u => u.id === CURRENT_USER_ID);
+  // Find the user again after the effect might have run
   const finalOtherUser = users.find((u) => u.id === resolvedParams.id);
-  
-  if (!finalOtherUser) {
-    // Still loading or not found, can show a loading state
+  const currentUser = users.find(u => u.id === CURRENT_USER_ID);
+
+  if (!finalOtherUser || !currentUser) {
+    // Still loading or user not found, can show a loading state or return null
     return null;
   }
 
-  const participants = [currentUser, finalOtherUser].filter(Boolean) as any[];
+  const initialMessages = getDmMessages(CURRENT_USER_ID, resolvedParams.id);
+  const participants = [currentUser, finalOtherUser];
 
   return (
     <ChatUI
       chatId={resolvedParams.id}
       chatType="dm"
-      chatName={finalOtherUser?.name || 'DM'}
+      chatName={finalOtherUser.name}
       initialMessages={initialMessages}
       participants={participants}
     />
