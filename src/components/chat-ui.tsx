@@ -52,10 +52,11 @@ export function ChatUI({
         type={chatType}
         name={chatName}
         participants={participants}
-        onAddParticipant={handleAddParticipant}
+        onAddParticipant={chatType === 'room' ? handleAddParticipant : undefined}
       />
       <ChatMessages
         messages={messages}
+        participants={participants}
         blockedUsers={blockedUsers}
         handleBlockUser={handleBlockUser}
       />

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
-import { CURRENT_USER_ID, users, type Message } from '@/lib/data';
+import { CURRENT_USER_ID, type Message, type User } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
@@ -16,12 +16,14 @@ import {
 
 interface ChatMessagesProps {
   messages: Message[];
+  participants: User[];
   blockedUsers: string[];
   handleBlockUser: (userId: string) => void;
 }
 
 export function ChatMessages({
   messages,
+  participants,
   blockedUsers,
   handleBlockUser,
 }: ChatMessagesProps) {
@@ -40,7 +42,7 @@ export function ChatMessages({
   return (
     <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6">
       {filteredMessages.map((message, index) => {
-        const user = users.find((u) => u.id === message.userId);
+        const user = participants.find((u) => u.id === message.userId);
         const isCurrentUser = message.userId === CURRENT_USER_ID;
 
         const showAvatarAndName =

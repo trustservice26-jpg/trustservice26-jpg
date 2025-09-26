@@ -143,8 +143,13 @@ export default function AppProviders({
             (React.isValidElement<{
               blockedUsers: string[];
               handleBlockUser: (userId: string) => void;
+              participants: User[];
             }>(children)
-              ? React.cloneElement(children, { blockedUsers, handleBlockUser })
+              ? React.cloneElement(children as React.ReactElement<{
+                  blockedUsers: string[];
+                  handleBlockUser: (userId: string) => void;
+                  participants: User[];
+                }>, { blockedUsers, handleBlockUser })
               : children)}
         </div>
       </SidebarInset>
