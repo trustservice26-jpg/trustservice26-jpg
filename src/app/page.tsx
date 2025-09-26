@@ -33,7 +33,7 @@ export default function Home() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">CandidConnect</CardTitle>
           <CardDescription>
-            Enter a secret Chat ID to start a private conversation.
+            Enter a secret Chat ID to create or join a private conversation. Only those who know the ID can join.
           </CardDescription>
         </CardHeader>
         <CardContent>
