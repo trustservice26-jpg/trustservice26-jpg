@@ -44,12 +44,12 @@ export function getAllUsers(callback: (users: User[]) => void): () => void {
 }
 
 
-export async function createAnonymousUser(): Promise<User> {
+export async function createAnonymousUser(name?: string): Promise<User> {
   const userCountSnapshot = await getDocs(collection(firestore, 'users'));
   const userCount = userCountSnapshot.size;
 
   const newUser: Omit<User, 'id'> = {
-    name: `Visitor-${userCount + 1}`,
+    name: name || `Visitor-${userCount + 1}`,
     avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
     isOnline: true,
   };
