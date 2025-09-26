@@ -1,8 +1,10 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Hash, MessageCircle, Trash2, Users, X } from 'lucide-react';
+
 import {
   SidebarProvider,
   Sidebar,
@@ -18,8 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { rooms, users, CURRENT_USER_ID } from '@/lib/data';
-import { Hash, MessageCircle, Users, X } from 'lucide-react';
+import { CURRENT_USER_ID, rooms, users } from '@/lib/data';
 import { Button } from './ui/button';
 
 export default function AppProviders({
@@ -42,7 +43,7 @@ export default function AppProviders({
 
   const handleUnblockUser = (userId: string) => {
     setBlockedUsers((prev) => prev.filter((id) => id !== userId));
-     const user = users.find((u) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     toast({
       title: 'User Unblocked',
       description: `You have unblocked ${user?.name}.`,
@@ -51,7 +52,9 @@ export default function AppProviders({
 
   const isUserBlocked = (userId: string) => blockedUsers.includes(userId);
 
-  const filteredDms = users.filter(u => u.id !== CURRENT_USER_ID && !isUserBlocked(u.id));
+  const filteredDms = users.filter(
+    (u) => u.id !== CURRENT_USER_ID && !isUserBlocked(u.id)
+  );
 
   return (
     <SidebarProvider>
@@ -59,7 +62,9 @@ export default function AppProviders({
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <MessageCircle className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">CandidConnect</h1>
+            <h1 className="text-xl font-semibold font-headline">
+              CandidConnect
+            </h1>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -88,7 +93,7 @@ export default function AppProviders({
                 Direct Messages
               </SidebarGroupLabel>
               {filteredDms.map((user) => (
-                <SidebarMenuItem key={user.id}>
+                <SidebarMenuItem key={user.id} className="group/item">
                   <Link href={`/dm/${user.id}`} className="w-full">
                     <SidebarMenuButton
                       isActive={pathname === `/dm/${user.id}`}
@@ -101,29 +106,47 @@ export default function AppProviders({
                       <span>{user.name}</span>
                     </SidebarMenuButton>
                   </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover/item:opacity-100"
+                    onClick={() => handleBlockUser(user.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
                 </SidebarMenuItem>
               ))}
-               {blockedUsers.length > 0 && (
+              {blockedUsers.length > 0 && (
                 <>
                   <SidebarGroupLabel className="flex items-center gap-2 mt-4 text-muted-foreground">
                     Blocked Users
                   </SidebarGroupLabel>
-                  {users.filter(u => isUserBlocked(u.id)).map(user => (
-                     <SidebarMenuItem key={user.id}>
-                      <div className="flex justify-between items-center w-full text-sm text-muted-foreground px-2">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={user.avatarUrl} alt={user.name} />
-                            <AvatarFallback>{user.name[0]}</AvatarFallback>
-                          </Avatar>
-                          <span className='line-through'>{user.name}</span>
+                  {users
+                    .filter((u) => isUserBlocked(u.id))
+                    .map((user) => (
+                      <SidebarMenuItem key={user.id}>
+                        <div className="flex justify-between items-center w-full text-sm text-muted-foreground px-2">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage
+                                src={user.avatarUrl}
+                                alt={user.name}
+                              />
+                              <AvatarFallback>{user.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <span className="line-through">{user.name}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleUnblockUser(user.id)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUnblockUser(user.id)}>
-                          <X className="w-4 h-4"/>
-                        </Button>
-                      </div>
-                    </SidebarMenuItem>
-                  ))}
+                      </SidebarMenuItem>
+                    ))}
                 </>
               )}
             </SidebarGroup>
@@ -134,9 +157,11 @@ export default function AppProviders({
         <div className="flex flex-col h-full">
           <header className="flex items-center h-14 px-4 border-b lg:hidden">
             <SidebarTrigger />
-             <div className="flex items-center gap-2 mx-auto">
+            <div className="flex items-center gap-2 mx-auto">
               <MessageCircle className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-semibold font-headline">CandidConnect</h1>
+              <h1 className="text-xl font-semibold font-headline">
+                CandidConnect
+              </h1>
             </div>
           </header>
           {children &&
@@ -145,11 +170,14 @@ export default function AppProviders({
               handleBlockUser: (userId: string) => void;
               participants: User[];
             }>(children)
-              ? React.cloneElement(children as React.ReactElement<{
-                  blockedUsers: string[];
-                  handleBlockUser: (userId: string) => void;
-                  participants: User[];
-                }>, { blockedUsers, handleBlockUser })
+              ? React.cloneElement(
+                  children as React.ReactElement<{
+                    blockedUsers: string[];
+                    handleBlockUser: (userId: string) => void;
+                    participants: User[];
+                  }>,
+                  { blockedUsers, handleBlockUser }
+                )
               : children)}
         </div>
       </SidebarInset>
