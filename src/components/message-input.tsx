@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface MessageInputProps {
   userId: string;
-  onNewMessage: () => void;
+  chatId: string;
 }
 
 function SubmitButton() {
@@ -24,23 +24,18 @@ function SubmitButton() {
 
 export function MessageInput({
   userId,
-  onNewMessage,
+  chatId,
 }: MessageInputProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
   const handleAction = async (formData: FormData) => {
     const text = formData.get('message') as string;
-    if (!text || text.trim() === '') return;
+    if (!text || !text.trim()) return;
 
-    // In a DM context, the `chatId` is the other user's ID.
-    // However, the `sendMessage` action needs the current user's ID.
-    // Since this component is used in the ChatUI, the `userId` prop
-    // is the ID of the current user's chat, which for a DM, is the user's own ID.
-    const result = await sendMessage(text, userId);
+    const result = await sendMessage(text, userId, chatId);
 
     if (result.success) {
-      onNewMessage();
       formRef.current?.reset();
     } else {
       toast({

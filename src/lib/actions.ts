@@ -7,6 +7,7 @@ import { createMessage } from './firestore';
 export async function sendMessage(
   text: string,
   userId: string,
+  chatId: string,
 ): Promise<{ success: boolean; newMessage?: Message; error?: string }> {
   if (!text.trim()) {
     return { success: false, error: 'Message cannot be empty.' };
@@ -14,11 +15,14 @@ export async function sendMessage(
    if (!userId) {
     return { success: false, error: 'User ID is missing.' };
   }
+   if (!chatId) {
+    return { success: false, error: 'Chat ID is missing.' };
+   }
 
   try {
     const { filteredText } = await profanityFiltering({ text });
 
-    const newMessage = await createMessage(filteredText, userId);
+    const newMessage = await createMessage(filteredText, userId, chatId);
 
     return { success: true, newMessage };
   } catch (error) {

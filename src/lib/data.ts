@@ -5,17 +5,13 @@ export type User = {
   isOnline: boolean;
 };
 
-export type Room = {
-  id: string;
-  name: string;
-};
-
 export type Message = {
   id: string;
   text: string;
   timestamp: string;
   userId: string;
-  dmId?: string;
+  chatId: string;
 };
 
+// This is no longer used but kept for potential future use.
 export const ADMIN_USER_ID = 'admin-user';

@@ -1,25 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { type Message, type User } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
+
 
 interface ChatMessagesProps {
   messages: Message[];
   participants: User[];
   currentUserId: string;
-  blockedUsers: string[];
-  handleBlockUser: (userId: string) => void;
 }
 
 function FormattedTimestamp({ timestamp }: { timestamp: string }) {
@@ -42,8 +33,6 @@ export function ChatMessages({
   messages,
   participants,
   currentUserId,
-  blockedUsers,
-  handleBlockUser,
 }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -53,19 +42,15 @@ export function ChatMessages({
     }
   }, [messages]);
 
-  const filteredMessages = messages.filter(
-    (m) => !blockedUsers.includes(m.userId)
-  );
-
   return (
     <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6">
-      {filteredMessages.map((message, index) => {
+      {messages.map((message, index) => {
         const user = participants.find((u) => u.id === message.userId);
         const isCurrentUser = message.userId === currentUserId;
 
         const showAvatarAndName =
           index === 0 ||
-          filteredMessages[index - 1].userId !== message.userId;
+          messages[index - 1].userId !== message.userId;
 
         return (
           <div
@@ -107,25 +92,6 @@ export function ChatMessages({
                 )}
               >
                 {message.text}
-                 {!isCurrentUser && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{[isCurrentUser ? 'left' : 'right']: '-2.5rem'}}
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleBlockUser(message.userId)}>
-                        Block User
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </div>
             </div>
              <div className="w-8" />

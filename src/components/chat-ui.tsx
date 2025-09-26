@@ -5,50 +5,60 @@ import type { Message, User } from '@/lib/data';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
+import { getUser } from '@/lib/firestore';
 
 type ChatUIProps = {
   chatId: string;
   currentUserId: string;
-  chatType: 'room' | 'dm';
-  chatName: string;
   initialMessages: Message[];
-  participants: User[];
-  blockedUsers?: string[];
-  handleBlockUser?: (userId: string) => void;
 };
 
 export function ChatUI({
   chatId,
   currentUserId,
-  chatType,
-  chatName,
   initialMessages,
-  participants: initialParticipants,
-  blockedUsers = [],
-  handleBlockUser = () => {},
 }: ChatUIProps) {
   const [messages, setMessages] = useState(initialMessages);
-  
+  const [participants, setParticipants] = useState<User[]>([]);
+
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
 
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      const userIds = new Set(messages.map(m => m.userId));
+      userIds.add(currentUserId);
+
+      const uniqueUserIds = Array.from(userIds);
+
+      const users = (await Promise.all(
+        uniqueUserIds.map(id => getUser(id))
+      )).filter(Boolean) as User[];
+      
+      setParticipants(users);
+    };
+
+    if (messages.length > 0 || currentUserId) {
+      fetchParticipants();
+    }
+  }, [messages, currentUserId]);
+
+
   return (
     <div className="flex flex-col h-full bg-background">
       <ChatHeader
-        type={chatType}
-        name={chatName}
+        type="room"
+        name={`Chat: ${chatId}`}
       />
       <ChatMessages
         messages={messages}
-        participants={initialParticipants}
+        participants={participants}
         currentUserId={currentUserId}
-        blockedUsers={blockedUsers}
-        handleBlockUser={handleBlockUser}
       />
       <MessageInput
-        userId={chatId}
-        onNewMessage={() => {}}
+        userId={currentUserId}
+        chatId={chatId}
       />
     </div>
   );

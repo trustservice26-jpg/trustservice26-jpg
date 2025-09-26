@@ -3,15 +3,14 @@
 import {
   collection,
   query,
-  where,
-  getDocs,
-  addDoc,
   onSnapshot,
   orderBy,
-  limit,
+  addDoc,
   doc,
   getDoc,
   setDoc,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { firestore } from './firebase';
 import type { User, Message } from './data';
@@ -28,28 +27,11 @@ export async function getUser(userId: string): Promise<User | null> {
     return null;
 }
 
-export function getAllUsers(callback: (users: User[]) => void): () => void {
-  const usersCol = collection(firestore, 'users');
-  const q = query(usersCol);
-
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const users = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as User));
-    callback(users);
-  });
-
-  return unsubscribe;
-}
-
-
-export async function createAnonymousUser(name?: string): Promise<User> {
-  const userCountSnapshot = await getDocs(collection(firestore, 'users'));
-  const userCount = userCountSnapshot.size;
-
+export async function createAnonymousUser(): Promise<User> {
+  // To create a more random-looking user ID for anonymity.
+  const randomNumber = Math.floor(Math.random() * 10000);
   const newUser: Omit<User, 'id'> = {
-    name: name || `Visitor-${userCount + 1}`,
+    name: `User-${randomNumber}`,
     avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
     isOnline: true,
   };
@@ -57,16 +39,16 @@ export async function createAnonymousUser(name?: string): Promise<User> {
   return { id: docRef.id, ...newUser };
 }
 
+
 // --- Message Functions ---
 export function getMessages(
-  userId: string,
+  chatId: string,
   callback: (messages: Message[]) => void
 ): () => void {
   const messagesCol = collection(firestore, 'messages');
-  const dmId = [ADMIN_USER_ID, userId].sort().join('-');
   const q = query(
     messagesCol,
-    where('dmId', '==', dmId),
+    where('chatId', '==', chatId),
     orderBy('timestamp', 'asc')
   );
 
@@ -85,15 +67,14 @@ export function getMessages(
 export async function createMessage(
   text: string,
   userId: string,
+  chatId: string
 ): Promise<Message> {
-  const newMessage: Omit<Message, 'id' | 'timestamp'> & { timestamp: Date } = {
+  const newMessage: Omit<Message, 'id' | 'timestamp'> & { timestamp: Date, chatId: string } = {
     text,
     userId,
+    chatId,
     timestamp: new Date(),
   };
-
-  const dmId = [ADMIN_USER_ID, userId].sort().join('-');
-  newMessage.dmId = dmId;
 
   const docRef = await addDoc(collection(firestore, 'messages'), newMessage);
   
@@ -101,19 +82,12 @@ export async function createMessage(
       id: docRef.id,
       text: newMessage.text,
       userId: newMessage.userId,
+      chatId: newMessage.chatId,
       timestamp: newMessage.timestamp.toISOString(),
-      ...(newMessage.dmId && { dmId: newMessage.dmId }),
   };
 }
 
-// Helper to create initial data if collections are empty
+// Seed function is no longer needed for this private chat model.
 export async function seedInitialData() {
-    const adminUserDoc = await getDoc(doc(firestore, 'users', ADMIN_USER_ID));
-    if (!adminUserDoc.exists()) {
-       await setDoc(doc(firestore, 'users', ADMIN_USER_ID), {
-         name: 'Admin', 
-         avatarUrl: `https://picsum.photos/seed/admin/200/200`, 
-         isOnline: true 
-       });
-    }
+  // Admin user is no longer needed.
 }
