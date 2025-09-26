@@ -23,15 +23,16 @@ export default function PrivateChatPage() {
       setLoading(true);
       let userId = localStorage.getItem('private-chat-user-id');
       let user: User | null = null;
+
       if (userId) {
         user = await getUser(userId);
       }
+      
       if (!user) {
         user = await createAnonymousUser();
-        if (user) {
-          localStorage.setItem('private-chat-user-id', user.id);
-        }
+        localStorage.setItem('private-chat-user-id', user.id);
       }
+      
       setCurrentUser(user);
       setLoading(false);
     };
