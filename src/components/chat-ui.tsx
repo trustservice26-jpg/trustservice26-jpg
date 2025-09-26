@@ -37,7 +37,6 @@ export function ChatUI({
       <ChatHeader
         type={chatType}
         name={chatName}
-        participants={participants}
       />
       <ChatMessages
         messages={messages}
