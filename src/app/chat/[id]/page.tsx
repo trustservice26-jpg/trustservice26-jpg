@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { ChatUI } from '@/components/chat-ui';
 import {
   createAnonymousUser,
@@ -10,11 +11,12 @@ import {
 } from '@/lib/firestore';
 import { Message, User } from '@/lib/data';
 
-function PrivateChatPage({ params }: { params: { id: string } }) {
+export default function PrivateChatPage() {
+  const params = useParams();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const chatId = params.id;
+  const chatId = params.id as string;
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -58,14 +60,5 @@ function PrivateChatPage({ params }: { params: { id: string } }) {
       currentUserId={currentUser.id}
       initialMessages={messages}
     />
-  );
-}
-
-
-export default function ChatRoom({ params }: { params: { id: string } }) {
-  return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center bg-background"><p>Loading...</p></div>}>
-      <PrivateChatPage params={params} />
-    </Suspense>
   );
 }
