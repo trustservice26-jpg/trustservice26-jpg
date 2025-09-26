@@ -1,3 +1,4 @@
+import React from 'react';
 import { Hash, User as UserIcon } from 'lucide-react';
 import type { User } from '@/lib/data';
 

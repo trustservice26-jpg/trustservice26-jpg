@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Hash, MessageCircle, Plus, Trash2, Users } from 'lucide-react';
+import { Hash, MessageCircle, Plus, Users, Trash2 } from 'lucide-react';
 
 import {
   SidebarProvider,
