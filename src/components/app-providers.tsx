@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Hash, MessageCircle, Plus, Users, Trash2 } from 'lucide-react';
@@ -43,14 +43,13 @@ export default function AppProviders({
 }) {
   const pathname = usePathname();
   const { toast } = useToast();
-  const [users, setUsers] = useState(initialUsers);
-  const [deletedUsers, setDeletedUsers] = useState<string[]>([]);
-  const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
-  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [users, setUsers] = React.useState(initialUsers);
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = React.useState(false);
+  const [blockedUsers, setBlockedUsers] = React.useState<string[]>([]);
 
   const handleDeleteUser = (userId: string) => {
-    setDeletedUsers((prev) => [...prev, userId]);
     const user = users.find((u) => u.id === userId);
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
     toast({
       title: 'User Removed',
       description: `You have removed ${user?.name} from your direct messages.`,
@@ -79,11 +78,8 @@ export default function AppProviders({
     }
   };
 
-
-  const isUserDeleted = (userId: string) => deletedUsers.includes(userId);
-
   const filteredDms = users.filter(
-    (u) => u.id !== CURRENT_USER_ID && !isUserDeleted(u.id)
+    (u) => u.id !== CURRENT_USER_ID
   );
 
   return (
