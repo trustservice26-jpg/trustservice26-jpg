@@ -72,10 +72,13 @@ export function getMessages(
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
     const messages = querySnapshot.docs.map(doc => {
       const data = doc.data();
+      // Firestore timestamps can be null if the message is just being written.
+      // They can also be a Firestore Timestamp object. We need to handle both cases.
+      const timestamp = data.timestamp as Timestamp | null;
       return {
         id: doc.id,
         ...data,
-        timestamp: (data.timestamp as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        timestamp: timestamp ? timestamp.toDate().toISOString() : new Date().toISOString(),
       } as Message;
     });
     callback(messages);
@@ -94,6 +97,7 @@ export async function createMessage(
   const newMessageData = {
     text,
     userId,
+    chatId,
     timestamp: serverTimestamp(),
   };
 
