@@ -8,9 +8,11 @@ const firebaseConfig = {
   "appId": "1:1048562187397:web:c00b05c80cdc10b7af7dec",
   "apiKey": "AIzaSyDCVdPooIaEJ2J8acLf96i_oN4ZmMPgH38",
   "authDomain": "studio-9640881306-b4654.firebaseapp.com",
-  "measurementId": "",
+  "measurementId": "G-7Z02C1237Z",
+  "storageBucket": "studio-9640881306-b4654.appspot.com",
   "messagingSenderId": "1048562187397"
 };
 
 const app = initializeApp(firebaseConfig);
 export const firestore = getFirestore(app);
+
