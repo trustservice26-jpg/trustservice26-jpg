@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Send } from 'lucide-react';
 import { sendMessage } from '@/lib/actions';
@@ -27,16 +27,22 @@ export function MessageInput({
   chatId,
 }: MessageInputProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const [text, setText] = useState('');
   const { toast } = useToast();
 
   const handleAction = async (formData: FormData) => {
-    const text = formData.get('message') as string;
-    if (!text || !text.trim()) return;
+    // Use the state for the message text, not formData
+    const messageText = text;
+    if (!messageText || !messageText.trim()) return;
 
-    const result = await sendMessage(text, userId, chatId);
+    // Manually append to formData right before sending if needed by server action,
+    // but here we can just pass it directly.
+    const result = await sendMessage(messageText, userId, chatId);
 
     if (result.success) {
-      formRef.current?.reset();
+      // Clear the state, which controls the textarea
+      setText('');
+      formRef.current?.reset(); // Also reset form for good measure
     } else {
       toast({
         variant: 'destructive',
@@ -52,16 +58,24 @@ export function MessageInput({
         ref={formRef}
         action={handleAction}
         className="flex items-center gap-2"
+        onSubmit={(e) => {
+            // Prevent default form submission if we're handling it via action
+            // This can help in some complex scenarios, but `action` should handle it.
+        }}
       >
         <Textarea
           name="message"
           placeholder="Type your message..."
           className="flex-1 resize-none"
           rows={1}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              formRef.current?.requestSubmit();
+              if (text.trim()) {
+                formRef.current?.requestSubmit();
+              }
             }
           }}
         />
