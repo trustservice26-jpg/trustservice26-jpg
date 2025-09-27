@@ -19,14 +19,16 @@ export async function sendMessage(
    }
 
   let filteredText = text;
-  try {
-    // Attempt to filter the text, but don't let it block sending the message.
-    const result = await profanityFiltering({ text });
-    filteredText = result.filteredText;
-  } catch (error) {
-    console.error('Profanity filter failed, sending original text:', error);
-    // If the filter fails (e.g., API key not set), we will send the original text.
-    // We don't want to block the user from chatting.
+  // Only run profanity filter if the API key is likely set.
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const result = await profanityFiltering({ text });
+      filteredText = result.filteredText;
+    } catch (error) {
+      console.error('Profanity filter failed, sending original text:', error);
+      // If the filter fails for any reason, we will just send the original text.
+      // We don't want to block the user from chatting.
+    }
   }
 
   try {

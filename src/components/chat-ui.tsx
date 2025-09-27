@@ -5,7 +5,7 @@ import type { Message, User } from '@/lib/data';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
-import { getUser, PREDEFINED_USERS } from '@/lib/firestore';
+import { PREDEFINED_USERS } from '@/lib/firestore';
 
 type ChatUIProps = {
   chatId: string;
@@ -19,41 +19,15 @@ export function ChatUI({
   initialMessages,
 }: ChatUIProps) {
   const [messages, setMessages] = useState(initialMessages);
-  const [participants, setParticipants] = useState<User[]>([]);
+  const [participants, setParticipants] = useState<User[]>(PREDEFINED_USERS);
 
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
 
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      const userIdsInChat = Array.from(new Set(messages.map(m => m.userId)));
-
-      if (!userIdsInChat.includes(currentUserId)) {
-          userIdsInChat.push(currentUserId);
-      }
-      
-      const users = (await Promise.all(
-        userIdsInChat.map(id => getUser(id))
-      )).filter((user): user is User => user !== null);
-      
-      const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
-
-      // Ensure both predefined users are always available as participants
-      const allPossibleParticipants = [...PREDEFINED_USERS];
-      for (const user of uniqueUsers) {
-          if (!allPossibleParticipants.find(p => p.id === user.id)) {
-              allPossibleParticipants.push(user);
-          }
-      }
-      
-      setParticipants(allPossibleParticipants);
-    };
-
-    fetchParticipants();
-  }, [messages, currentUserId]);
-
-
+  // The participants are now pre-set to the two defined users,
+  // so no complex effect is needed to fetch them. This is more robust.
+  
   return (
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader
