@@ -42,6 +42,7 @@ export async function getOrCreateUserForChat(chatId: string): Promise<User> {
     const chatUserKey = `candid-connect-user-id-${chatId}`;
     let assignedUserId = localStorage.getItem(chatUserKey);
 
+    // If user already has an ID for this chat in this browser, return that user.
     if (assignedUserId) {
         const existingUser = PREDEFINED_USERS.find(u => u.id === assignedUserId);
         if (existingUser) {
@@ -49,12 +50,24 @@ export async function getOrCreateUserForChat(chatId: string): Promise<User> {
         }
     }
     
-    // Simple assignment based on time to try and split users.
-    const now = new Date().getTime();
-    const assignedUser = now % 2 === 0 ? PREDEFINED_USERS[0] : PREDEFINED_USERS[1];
+    // If no user in localStorage, we need to assign one.
+    // Check current presence to see who is already online.
+    const presenceDocRef = getPresenceDocRef(chatId);
+    const presenceDoc = await getDoc(presenceDocRef);
+    const presenceData = presenceDoc.exists() ? presenceDoc.data() : {};
 
-    localStorage.setItem(chatUserKey, assignedUser.id);
-    return assignedUser;
+    const user24 = PREDEFINED_USERS[0];
+    const user25 = PREDEFINED_USERS[1];
+
+    // Check if user 24 is online. If not, assign user 24.
+    if (!presenceData[user24.id] || !presenceData[user24.id].online) {
+        localStorage.setItem(chatUserKey, user24.id);
+        return user24;
+    }
+    
+    // If user 24 is online, assign user 25.
+    localStorage.setItem(chatUserKey, user25.id);
+    return user25;
 }
 
 

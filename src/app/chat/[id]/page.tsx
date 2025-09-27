@@ -24,8 +24,8 @@ export default function ChatRoomPage() {
       return;
     }
 
-    let unsubMessages: () => void;
-    let unsubPresence: () => void;
+    let unsubMessages: (() => void) | null = null;
+    let unsubPresence: (() => void) | null = null;
     let user: User | null = null;
 
     const initialize = async () => {
@@ -40,12 +40,12 @@ export default function ChatRoomPage() {
             duration: 5000,
         });
 
-        // 2. Subscribe to Messages and Presence
+        // 2. Set user as online FIRST
+        await updatePresence(chatId, user.id, true);
+
+        // 3. Subscribe to Messages and Presence
         unsubMessages = getMessages(chatId, setMessages);
         unsubPresence = subscribeToPresence(chatId, setPresence);
-
-        // 3. Set user as online
-        updatePresence(chatId, user.id, true);
 
       } catch (error) {
         console.error("Failed to initialize chat:", error);
@@ -66,6 +66,7 @@ export default function ChatRoomPage() {
       if (unsubMessages) unsubMessages();
       if (unsubPresence) unsubPresence();
       if (user) {
+        // Use a sync function on unload if possible, but this is a good fallback
         updatePresence(chatId, user.id, false);
       }
     };
