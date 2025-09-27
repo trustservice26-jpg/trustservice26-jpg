@@ -10,13 +10,29 @@ import {
   getDoc,
   serverTimestamp,
   Timestamp,
+  getDocs,
+  limit,
 } from 'firebase/firestore';
 import { firestore } from './firebase';
 import type { User, Message } from './data';
 
+// --- Pre-defined Users ---
+export const PREDEFINED_USERS: User[] = [
+  { id: 'user-24', name: '24', avatarUrl: `https://picsum.photos/seed/24/200/200` },
+  { id: 'user-25', name: '25', avatarUrl: `https://picsum.photos/seed/25/200/200` },
+];
+
+
 // --- User Functions ---
 export async function getUser(userId: string): Promise<User | null> {
     if (!userId) return null;
+    
+    // Check if the user is one of the predefined users
+    const predefinedUser = PREDEFINED_USERS.find(u => u.id === userId);
+    if (predefinedUser) {
+        return predefinedUser;
+    }
+
     try {
         const userDocRef = doc(firestore, 'users', userId);
         const userDoc = await getDoc(userDocRef);
@@ -30,16 +46,26 @@ export async function getUser(userId: string): Promise<User | null> {
     }
 }
 
-export async function createAnonymousUser(): Promise<User> {
-  // To create a more random-looking user ID for anonymity.
-  const randomNumber = Math.floor(Math.random() * 10000);
-  const newUser: Omit<User, 'id'> = {
-    name: `User-${randomNumber}`,
-    avatarUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
-    isOnline: true,
-  };
-  const docRef = await addDoc(collection(firestore, 'users'), newUser);
-  return { id: docRef.id, ...newUser };
+
+export async function getOrCreateUserForChat(chatId: string): Promise<User> {
+    const messagesCol = collection(firestore, `chats/${chatId}/messages`);
+    const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(50));
+    const querySnapshot = await getDocs(q);
+    const userIdsInChat = new Set(querySnapshot.docs.map(d => d.data().userId as string));
+
+    // If user '24' is not in the chat, assign this user.
+    if (!userIdsInChat.has(PREDEFINED_USERS[0].id)) {
+        return PREDEFINED_USERS[0];
+    }
+    
+    // If user '24' is in the chat, but user '25' is not, assign user '25'.
+    if (!userIdsInChat.has(PREDEFINED_USERS[1].id)) {
+        return PREDEFINED_USERS[1];
+    }
+
+    // Default to user '24' if both are somehow present or if the chat is empty.
+    // This could happen if more than two people join, but for a 2-user chat, this logic is sound.
+    return PREDEFINED_USERS[0];
 }
 
 

@@ -5,7 +5,7 @@ import type { Message, User } from '@/lib/data';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
 import { MessageInput } from './message-input';
-import { getUser } from '@/lib/firestore';
+import { getUser, PREDEFINED_USERS } from '@/lib/firestore';
 
 type ChatUIProps = {
   chatId: string;
@@ -27,10 +27,8 @@ export function ChatUI({
 
   useEffect(() => {
     const fetchParticipants = async () => {
-      // Get all unique user IDs from messages
       const userIdsInChat = Array.from(new Set(messages.map(m => m.userId)));
 
-      // Ensure the current user is included, even if they haven't sent a message
       if (!userIdsInChat.includes(currentUserId)) {
           userIdsInChat.push(currentUserId);
       }
@@ -39,7 +37,17 @@ export function ChatUI({
         userIdsInChat.map(id => getUser(id))
       )).filter((user): user is User => user !== null);
       
-      setParticipants(users);
+      const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
+
+      // Ensure both predefined users are always available as participants
+      const allPossibleParticipants = [...PREDEFINED_USERS];
+      for (const user of uniqueUsers) {
+          if (!allPossibleParticipants.find(p => p.id === user.id)) {
+              allPossibleParticipants.push(user);
+          }
+      }
+      
+      setParticipants(allPossibleParticipants);
     };
 
     fetchParticipants();
