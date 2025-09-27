@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Message, User, Presence } from '@/lib/data';
 import { ChatHeader } from './chat-header';
 import { ChatMessages } from './chat-messages';
@@ -21,12 +21,7 @@ export function ChatUI({
   initialMessages,
   presence,
 }: ChatUIProps) {
-  const [messages, setMessages] = useState(initialMessages);
   const [participants, setParticipants] = useState<User[]>(PREDEFINED_USERS);
-
-  useEffect(() => {
-    setMessages(initialMessages);
-  }, [initialMessages]);
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -36,7 +31,7 @@ export function ChatUI({
         presence={presence}
       />
       <ChatMessages
-        messages={messages}
+        messages={initialMessages}
         participants={participants}
         currentUserId={currentUserId}
       />
