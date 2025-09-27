@@ -18,14 +18,20 @@ export default function ChatRoomPage() {
 
   const chatId = params.id as string;
 
-  // Effect for handling user initialization
   useEffect(() => {
-    const initializeUser = async () => {
-      setIsLoading(true);
-      if (!chatId) return;
+    if (!chatId) {
+      setIsLoading(false);
+      return;
+    }
 
+    let unsubMessages: () => void;
+    let unsubPresence: () => void;
+    let user: User | null = null;
+
+    const initialize = async () => {
       try {
-        const user = await getOrCreateUserForChat(chatId);
+        // 1. Initialize User
+        user = await getOrCreateUserForChat(chatId);
         setCurrentUser(user);
         
         toast({
@@ -34,53 +40,45 @@ export default function ChatRoomPage() {
             duration: 5000,
         });
 
+        // 2. Subscribe to Messages and Presence
+        unsubMessages = getMessages(chatId, setMessages);
+        unsubPresence = subscribeToPresence(chatId, setPresence);
+
+        // 3. Set user as online
+        updatePresence(chatId, user.id, true);
+
       } catch (error) {
-        console.error("Failed to initialize user:", error);
+        console.error("Failed to initialize chat:", error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Could not initialize your user session. Please refresh the page.",
+          description: "Could not initialize your chat session. Please refresh the page.",
         });
       } finally {
         setIsLoading(false);
       }
     };
 
-    initializeUser();
+    initialize();
+
+    // 4. Cleanup function
+    return () => {
+      if (unsubMessages) unsubMessages();
+      if (unsubPresence) unsubPresence();
+      if (user) {
+        updatePresence(chatId, user.id, false);
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
 
-  // Effect for chat messages and presence
-  useEffect(() => {
-    if (!isLoading && currentUser && chatId) {
-      const unsubMessages = getMessages(chatId, setMessages);
-      const unsubPresence = subscribeToPresence(chatId, setPresence);
-
-      // Set user as online
-      updatePresence(chatId, currentUser.id, true);
-
-      // Set user as offline on unload
-      const handleBeforeUnload = () => {
-        updatePresence(chatId, currentUser.id, false);
-      };
-      window.addEventListener('beforeunload', handleBeforeUnload);
-
-      return () => {
-        unsubMessages();
-        unsubPresence();
-        // Set user as offline on component unmount
-        updatePresence(chatId, currentUser.id, false);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
-  }, [isLoading, currentUser, chatId]);
 
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
             <p className="text-xl">Loading your secure chat...</p>
-            <p className="text-sm text-muted-foreground mt-2">Initializing user session...</p>
+            <p className="text-sm text-muted-foreground mt-2">Initializing session...</p>
         </div>
       </div>
     );
