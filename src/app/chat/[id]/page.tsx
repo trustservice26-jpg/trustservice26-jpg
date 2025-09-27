@@ -20,24 +20,16 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     const initializeUser = async () => {
-      let userId = localStorage.getItem(USER_ID_STORAGE_KEY);
+      setLoading(true);
       let user: User | null = null;
+      try {
+        let userId = localStorage.getItem(USER_ID_STORAGE_KEY);
 
-      if (userId) {
-        try {
+        if (userId) {
           user = await getUser(userId);
-          // If user not found in DB (e.g. DB cleared), create a new one
-          if (!user) {
-            userId = null; 
-          }
-        } catch (error) {
-          console.error("Failed to fetch existing user:", error);
-          userId = null; // Force create new user
         }
-      }
 
-      if (!userId) {
-        try {
+        if (!user) {
           const newUser = await createAnonymousUser();
           localStorage.setItem(USER_ID_STORAGE_KEY, newUser.id);
           user = newUser;
@@ -46,20 +38,19 @@ export default function ChatRoomPage() {
             description: `You've joined the chat as ${newUser.name}. Your identity is anonymous.`,
             duration: 5000,
           });
-        } catch (error) {
-          console.error("Failed to create a new anonymous user:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not initialize your user session. Please refresh the page.",
-          });
-          setLoading(false);
-          return;
         }
+        
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Failed to initialize user:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not initialize your user session. Please refresh the page.",
+        });
+      } finally {
+        setLoading(false);
       }
-      
-      setCurrentUser(user);
-      setLoading(false);
     };
 
     initializeUser();
