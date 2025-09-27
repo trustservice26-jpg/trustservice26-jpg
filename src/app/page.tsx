@@ -18,7 +18,7 @@ export default function Home() {
       toast({
         variant: 'destructive',
         title: 'Chat ID is required',
-        description: 'Please enter a Chat ID to start or join a chat.',
+        description: 'Please enter a secret Chat ID to create or join a chat.',
       });
       return;
     }
