@@ -10,8 +10,5 @@ export type Message = {
   text: string;
   timestamp: string;
   userId: string;
-  chatId: string;
+  chatId: string; // This will now be populated on the client
 };
-
-// This is no longer used but kept for potential future use.
-export const ADMIN_USER_ID = 'admin-user';

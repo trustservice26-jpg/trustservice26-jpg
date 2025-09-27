@@ -18,7 +18,7 @@ export default function Home() {
       toast({
         variant: 'destructive',
         title: 'Chat ID is required',
-        description: 'Please enter a secret Chat ID to create or join a chat.',
+        description: 'Please enter a secret Chat ID to create or join a private chat.',
       });
       return;
     }
@@ -28,11 +28,11 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-background text-foreground p-4">
-      <Card className="max-w-sm w-full bg-card border-border shadow-2xl">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
+      <Card className="max-w-md w-full bg-card border-border shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">CandidConnect</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Enter a secret Chat ID to create or join a private conversation. Only those who know the ID can join.
           </CardDescription>
         </CardHeader>

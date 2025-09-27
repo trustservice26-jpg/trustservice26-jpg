@@ -27,26 +27,27 @@ export function ChatUI({
 
   useEffect(() => {
     const fetchParticipants = async () => {
-      const userIds = new Set(messages.map(m => m.userId));
-      userIds.add(currentUserId);
+      // Get all unique user IDs from messages
+      const userIdsInChat = Array.from(new Set(messages.map(m => m.userId)));
 
-      const uniqueUserIds = Array.from(userIds);
-
+      // Ensure the current user is included, even if they haven't sent a message
+      if (!userIdsInChat.includes(currentUserId)) {
+          userIdsInChat.push(currentUserId);
+      }
+      
       const users = (await Promise.all(
-        uniqueUserIds.map(id => getUser(id))
-      )).filter(Boolean) as User[];
+        userIdsInChat.map(id => getUser(id))
+      )).filter((user): user is User => user !== null);
       
       setParticipants(users);
     };
 
-    if (messages.length > 0 || currentUserId) {
-      fetchParticipants();
-    }
+    fetchParticipants();
   }, [messages, currentUserId]);
 
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-screen bg-background">
       <ChatHeader
         type="room"
         name={chatId}

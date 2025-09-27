@@ -20,20 +20,23 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     const initializeUser = async () => {
-      setLoading(true);
       let userId = localStorage.getItem(USER_ID_STORAGE_KEY);
       let user: User | null = null;
 
       if (userId) {
         try {
           user = await getUser(userId);
+          // If user not found in DB (e.g. DB cleared), create a new one
+          if (!user) {
+            userId = null; 
+          }
         } catch (error) {
           console.error("Failed to fetch existing user:", error);
-          // If fetching fails, we'll create a new user.
+          userId = null; // Force create new user
         }
       }
 
-      if (!user) {
+      if (!userId) {
         try {
           const newUser = await createAnonymousUser();
           localStorage.setItem(USER_ID_STORAGE_KEY, newUser.id);
@@ -71,7 +74,7 @@ export default function ChatRoomPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
+      <div className="flex h-screen items-center justify-center bg-background">
         <p>Loading your secure chat...</p>
       </div>
     );
@@ -79,7 +82,7 @@ export default function ChatRoomPage() {
 
   if (!currentUser) {
     return (
-      <div className="flex h-full items-center justify-center bg-background text-center p-4">
+      <div className="flex h-screen items-center justify-center bg-background text-center p-4">
         <div>
           <h2 className="text-2xl font-bold text-destructive mb-4">Could not load chat.</h2>
           <p>An error occurred while setting up your user identity.</p>

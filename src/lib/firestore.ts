@@ -8,23 +8,26 @@ import {
   addDoc,
   doc,
   getDoc,
-  setDoc,
-  where,
-  getDocs,
+  serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { firestore } from './firebase';
 import type { User, Message } from './data';
-import { ADMIN_USER_ID } from './data';
 
 // --- User Functions ---
 export async function getUser(userId: string): Promise<User | null> {
     if (!userId) return null;
-    const userDocRef = doc(firestore, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-        return { id: userDoc.id, ...userDoc.data() } as User;
+    try {
+        const userDocRef = doc(firestore, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            return { id: userDoc.id, ...userDoc.data() } as User;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
     }
-    return null;
 }
 
 export async function createAnonymousUser(): Promise<User> {
@@ -45,19 +48,21 @@ export function getMessages(
   chatId: string,
   callback: (messages: Message[]) => void
 ): () => void {
-  const messagesCol = collection(firestore, 'messages');
+  const messagesCol = collection(firestore, `chats/${chatId}/messages`);
   const q = query(
     messagesCol,
-    where('chatId', '==', chatId),
     orderBy('timestamp', 'asc')
   );
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const messages = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: doc.data().timestamp.toDate().toISOString(),
-    } as Message));
+    const messages = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        timestamp: (data.timestamp as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+      } as Message;
+    });
     callback(messages);
   });
 
@@ -69,25 +74,21 @@ export async function createMessage(
   userId: string,
   chatId: string
 ): Promise<Message> {
-  const newMessage: Omit<Message, 'id' | 'timestamp'> & { timestamp: Date, chatId: string } = {
+  const messagesCol = collection(firestore, `chats/${chatId}/messages`);
+  
+  const newMessageData = {
     text,
     userId,
-    chatId,
-    timestamp: new Date(),
+    timestamp: serverTimestamp(),
   };
 
-  const docRef = await addDoc(collection(firestore, 'messages'), newMessage);
+  const docRef = await addDoc(messagesCol, newMessageData);
   
   return {
       id: docRef.id,
-      text: newMessage.text,
-      userId: newMessage.userId,
-      chatId: newMessage.chatId,
-      timestamp: newMessage.timestamp.toISOString(),
+      text: text,
+      userId: userId,
+      chatId: chatId,
+      timestamp: new Date().toISOString(), // Return optimistic timestamp
   };
-}
-
-// Seed function is no longer needed for this private chat model.
-export async function seedInitialData() {
-  // Admin user is no longer needed.
 }

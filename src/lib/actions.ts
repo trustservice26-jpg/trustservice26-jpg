@@ -8,7 +8,7 @@ export async function sendMessage(
   text: string,
   userId: string,
   chatId: string,
-): Promise<{ success: boolean; newMessage?: Message; error?: string }> {
+): Promise<{ success: boolean; error?: string }> {
   if (!text.trim()) {
     return { success: false, error: 'Message cannot be empty.' };
   }
@@ -22,11 +22,15 @@ export async function sendMessage(
   try {
     const { filteredText } = await profanityFiltering({ text });
 
-    const newMessage = await createMessage(filteredText, userId, chatId);
+    await createMessage(filteredText, userId, chatId);
 
-    return { success: true, newMessage };
+    return { success: true };
   } catch (error) {
     console.error('Error sending message:', error);
+    
+    if (error instanceof Error) {
+        return { success: false, error: error.message };
+    }
     return { success: false, error: 'An unexpected error occurred while sending the message.' };
   }
 }
