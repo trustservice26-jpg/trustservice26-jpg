@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -9,5 +10,11 @@ export type Message = {
   text: string;
   timestamp: string;
   userId: string;
-  chatId: string; // This will now be populated on the client
+  chatId: string;
+};
+
+export type Presence = {
+  [userId: string]: {
+    online: boolean;
+  };
 };

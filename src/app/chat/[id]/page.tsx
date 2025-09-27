@@ -4,11 +4,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ChatUI } from '@/components/chat-ui';
-import { getMessages, getOrCreateUserForChat } from '@/lib/firestore';
-import { Message, User } from '@/lib/data';
+import { getMessages, getOrCreateUserForChat, subscribeToPresence, updatePresence } from '@/lib/firestore';
+import { Message, User, Presence } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-
-const USER_ID_STORAGE_KEY_PREFIX = 'candid-connect-user-id-';
 
 export default function ChatRoomPage() {
   const params = useParams();
@@ -16,9 +14,9 @@ export default function ChatRoomPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [presence, setPresence] = useState<Presence>({});
 
   const chatId = params.id as string;
-  const USER_ID_STORAGE_KEY = `${USER_ID_STORAGE_KEY_PREFIX}${chatId}`;
 
   // Effect for handling user initialization
   useEffect(() => {
@@ -52,11 +50,28 @@ export default function ChatRoomPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
 
-  // Effect for subscribing to chat messages, runs only after user is initialized
+  // Effect for chat messages and presence
   useEffect(() => {
     if (!isLoading && currentUser && chatId) {
-      const unsubscribe = getMessages(chatId, setMessages);
-      return () => unsubscribe();
+      const unsubMessages = getMessages(chatId, setMessages);
+      const unsubPresence = subscribeToPresence(chatId, setPresence);
+
+      // Set user as online
+      updatePresence(chatId, currentUser.id, true);
+
+      // Set user as offline on unload
+      const handleBeforeUnload = () => {
+        updatePresence(chatId, currentUser.id, false);
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        unsubMessages();
+        unsubPresence();
+        // Set user as offline on component unmount
+        updatePresence(chatId, currentUser.id, false);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
     }
   }, [isLoading, currentUser, chatId]);
 
@@ -87,6 +102,7 @@ export default function ChatRoomPage() {
       chatId={chatId}
       currentUserId={currentUser.id}
       initialMessages={messages}
+      presence={presence}
     />
   );
 }
