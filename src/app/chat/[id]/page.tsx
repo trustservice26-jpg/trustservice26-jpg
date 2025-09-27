@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -13,17 +14,18 @@ export default function ChatRoomPage() {
   const params = useParams();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isUserLoading, setIsUserLoading] = useState(true);
   const { toast } = useToast();
 
   const chatId = params.id as string;
 
+  // Effect for handling user initialization
   useEffect(() => {
-    const initializeUserAndChat = async () => {
-      setLoading(true);
+    const initializeUser = async () => {
+      setIsUserLoading(true);
       try {
-        let user: User | null = null;
         const storedUserId = localStorage.getItem(USER_ID_STORAGE_KEY);
+        let user: User | null = null;
 
         if (storedUserId) {
           user = await getUser(storedUserId);
@@ -41,7 +43,7 @@ export default function ChatRoomPage() {
         }
         
         setCurrentUser(user);
-        
+
       } catch (error) {
         console.error("Failed to initialize user:", error);
         toast({
@@ -50,26 +52,28 @@ export default function ChatRoomPage() {
           description: "Could not initialize your user session. Please refresh the page.",
         });
       } finally {
-        setLoading(false);
+        setIsUserLoading(false);
       }
     };
 
-    initializeUserAndChat();
-  }, [chatId, toast]);
+    initializeUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on component mount
 
+  // Effect for subscribing to chat messages, runs only after user is initialized
   useEffect(() => {
-    if (chatId) {
+    if (!isUserLoading && currentUser && chatId) {
       const unsubscribe = getMessages(chatId, setMessages);
       return () => unsubscribe();
     }
-  }, [chatId]);
+  }, [isUserLoading, currentUser, chatId]);
 
-  if (loading) {
+  if (isUserLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
             <p className="text-xl">Loading your secure chat...</p>
-            <p className="text-sm text-muted-foreground mt-2">Just a moment while we connect you.</p>
+            <p className="text-sm text-muted-foreground mt-2">Initializing user session...</p>
         </div>
       </div>
     );
