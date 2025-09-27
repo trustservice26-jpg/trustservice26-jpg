@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -70,11 +71,19 @@ export default function ChatRoomPage() {
   }, [chatId]);
 
   const handleCopyUserId = () => {
-    navigator.clipboard.writeText(userId);
-    toast({
-      title: 'User ID Copied!',
-      description: 'You can now use this ID to log in from another device.',
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(userId);
+      toast({
+        title: 'User ID Copied!',
+        description: 'You can now use this ID to log in from another device.',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Copy Failed',
+        description: 'Could not copy the User ID. Please copy it manually.',
+      });
+    }
   };
 
   if (loading) {
